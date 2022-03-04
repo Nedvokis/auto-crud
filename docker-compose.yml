@@ -12,7 +12,7 @@ services:
         networks:
             - default
     server:
-        restart: always
+        # restart: always
         build:
             context: .
             dockerfile: Dockerfile
