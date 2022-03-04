@@ -9,6 +9,8 @@ services:
             - "12021:5432"
         volumes:
             - data:/var/lib/postgresql/data
+        networks:
+            - default
     server:
         restart: always
         build:
