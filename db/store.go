@@ -1,28 +1,26 @@
 package db
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/auto-crud/models"
 	"github.com/fatih/structs"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jmoiron/sqlx"
 )
 
 type Store struct {
-	db *pgxpool.Pool
+	db *sqlx.DB
 }
 
-func NewStore(db *pgxpool.Pool) *Store {
+func NewStore(db *sqlx.DB) *Store {
 	return &Store{
 		db: db,
 	}
 }
 
 func (scs *Store) Create(collectionName string, collection interface{}) error {
-	ctx := context.Background()
 
 	coll := structs.Map(collection)
 
@@ -49,25 +47,17 @@ func (scs *Store) Create(collectionName string, collection interface{}) error {
 	valuesStr := strings.Join(values, ", ")
 
 	query := fmt.Sprintf(INSERT, collectionName, keysStr, valuesStr)
-	scs.db.QueryRow(ctx, query)
+	scs.db.QueryRow(query)
 
 	return nil
 }
 
-func (scs *Store) GetOne(collectionName string, id uint) (interface{}, error) {
-	ctx := context.Background()
+func (scs *Store) GetOne(collectionName string, id uint, collection interface{}) (interface{}, error) {
 
 	user := models.SelectUser{}
 
 	query := fmt.Sprintf(READ_ONE, collectionName, id)
-	if err := scs.db.QueryRow(ctx, query).Scan(
-		&user.Id,
-		&user.Name,
-		&user.SecondName,
-		&user.Online,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	); err != nil {
+	if err := scs.db.Get(&collection, query); err != nil {
 		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 		return nil, err
 	}
@@ -75,7 +65,6 @@ func (scs *Store) GetOne(collectionName string, id uint) (interface{}, error) {
 }
 
 func (scs *Store) GetAll(collectionName string, collection interface{}) error {
-	ctx := context.Background()
 	coll := structs.Map(collection)
 
 	var where []string
@@ -100,7 +89,7 @@ func (scs *Store) GetAll(collectionName string, collection interface{}) error {
 	whereStr := strings.Join(where, " and ")
 
 	query := fmt.Sprintf(READ_ALL, collectionName, whereStr)
-	if err := scs.db.QueryRow(ctx, query).Scan(&collection); err != nil {
+	if err := scs.db.QueryRow(query).Scan(&collection); err != nil {
 		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 		return err
 	}

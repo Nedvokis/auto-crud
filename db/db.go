@@ -1,14 +1,14 @@
 package db
 
 import (
-	"context"
 	"os"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
-func New() (*pgxpool.Pool, error) {
-	conn, err := pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+func New() (*sqlx.DB, error) {
+	conn, err := sqlx.Connect("pgx", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		return nil, err
 	}
